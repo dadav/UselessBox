@@ -1,504 +1,165 @@
-#include <Servo.h> 
+#include <Servo.h>
 
+// PINS
+const int switchPIN = 7;
+const int handPIN = 6;
+const int doorPIN = 5;
+
+// STATES
+int handOFF = 0;
+int handON = 160;
+int doorCLOSE = 0;
+int doorOPEN = 60;
+int OPEN = 0;
+
+// Misc
+int selectedMove = 0;
+
+// Servos
 Servo doorServo;
-Servo fingerServo;
+Servo handServo;
 
-int swPin = 2;               //switch on pin 2
+// Helper functions
 
-int pos = 0;
-int selectedMove = 0;             //move selector
-
-void setup()
-{
-  pinMode(swPin, INPUT);
-  doorServo.attach(9);           //set door servo on Pin 9 pwm
-  fingerServo.attach(10);          //set finger servo on Pin 10 pwm
-  doorServo.write(80);           //set door to hiding position 
-  fingerServo.write(0);            //set finger to hiding position
+/*
+Attaches to the servo, turns it, waits some time and detaches.
+We do this to stop the current draw
+*/
+void turnDoorServo(int val, int wait) {
+  doorServo.attach(doorPIN);
+  doorServo.write(val);
+  delay(wait);
+  doorServo.detach();
 }
 
+/*
+Attaches to the servo, turns it, waits some time and detaches.
+We do this to stop the current draw
+*/
+void turnHandServo(int val, int wait) {
+  handServo.attach(handPIN);
+  handServo.write(val);
+  delay(wait);
+  handServo.detach();
+}
 
-void loop(){
+void resetServos() {
+  turnHandServo(handOFF, 100);
+  turnDoorServo(doorCLOSE, 100);
+}
 
-  //if the switch is on, move door and finger to switch it off
-  if(digitalRead(swPin) == HIGH)
-  {
-    
-    if (selectedMove > 9) { 
-    selectedMove = 0; 
-    } //when all moves are played, repeat the moves from beginning 
-    
-    if (selectedMove == 0) { 
-    simpleClose(); 
+void setup() {
+  Serial.begin(9600);
+  pinMode(switchPIN, INPUT_PULLUP);
+  resetServos();
+  delay(1000);
+}
+
+/*
+Simple, plain open, turn off & close
+*/
+void simpleClose() {
+    turnDoorServo(doorOPEN, 1000);
+    turnHandServo(handON, 2000);
+    turnHandServo(handOFF, 450);
+    turnDoorServo(doorCLOSE, 500);
+}
+
+/*
+Opens the door, turns the hand half way, make a small pause and then continue.
+*/
+void simpleCloseSlow() {
+    turnDoorServo(doorOPEN, 1000);
+    turnHandServo(handON / 2, 2000);
+    simpleClose();
+}
+
+/*
+Opens the door repeatedly and fakes the trigger
+*/
+void increasingFakeTouch() {
+  int turns = 5;
+  for(int i = 0; i < turns; i++) {
+    turnDoorServo(doorOPEN, 1000);
+    turnHandServo(handON / (turns - i), 300 + i * 100);
+    turnHandServo(handOFF, 450);
+    turnDoorServo(doorCLOSE, 500);
+  }
+  simpleClose();
+}
+
+/*
+Opens the door multiple times without turning the hand at all
+ */
+void crazyDoor() {
+    for (int i = 0; i < 3; i++) {
+      turnDoorServo(doorOPEN / 4, 300);
+      turnDoorServo(doorCLOSE, 300);
     }
-    else if (selectedMove == 1) { 
-    simpleClose(); 
-    }   
-    else if (selectedMove == 2) { 
-    simpleClose2(); 
-    }
-    else if (selectedMove == 3) { 
-    crazydoor(); 
-    }
-    else if (selectedMove == 4) { 
-    slow(); 
-    }
-    else if (selectedMove == 5) { 
-    serious(); 
-    }
-    else if (selectedMove == 6) { 
-    trollClose(); 
-    }
-    else if (selectedMove == 7) { 
-    simpleClose(); 
-    }
-    else if (selectedMove == 8) { 
-    matrix(); 
-    }
-    else if (selectedMove == 9) { 
-    sneak(); 
-    }
-     
-   selectedMove += 1;         //swith to next move 
-   
+    simpleClose();
+}
+
+/*
+Does a simple close, really slow
+ */
+void slow() {
+  // open door
+  for (int pos = doorCLOSE; pos < doorOPEN; pos = pos + 5) {
+    turnDoorServo(pos, 200);
+  }
+  turnDoorServo(doorOPEN, 250);
+  
+  // turn finger
+  for (int pos = handOFF; pos < handON - 30; pos = pos + 5) {
+    turnHandServo(pos, 100);
+  }
+  turnHandServo(handON, 250);
+  
+  // turn finger off
+  for (int pos = handON; pos > handOFF; pos = pos - 5) {
+    turnHandServo(pos, 200);
+  }
+  
+  // close door
+  for (int pos = doorOPEN; pos > doorCLOSE; pos = pos - 5) {
+    turnDoorServo(pos, 200);
   }
 }
 
-
-
-// Moves
-
-   // basic move 
-   void simpleClose() 
-   {    
-   //Moving door
-    for(pos = 80; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-   
-    //Moving hand
-    for(pos = 0; pos < 129; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }  
-    
-    //hiding hand
-    for(pos = 129; pos>=0; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    } 
-      
-    //hiding door
-    for(pos = 155; pos>=80; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-   } 
-     
-   // open and wait, then move finger and wait, then switch of and hide  
-    void simpleClose2()
-   {
-  //Moving door
-    for(pos = 80; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-    delay(800); 
-    //Moving hand
-    for(pos = 0; pos < 100; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }
-    delay(1000); 
-    for(pos = 100; pos < 129; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }    
-    
-    //hiding hand
-    for(pos = 129; pos>=0; pos-=5)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    } 
-      
-    //hiding door
-    for(pos = 155; pos>=80; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                    
-     
-     
-   } 
-     
-   }
-  
-   //open door then close it many times, wait, then quickly reopen, switch off and hide.
-  
-   void crazydoor()
-  {
-    
-   //Moving door
-    for(pos = 80; pos < 125; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-  
-    //hiding door
-    for(pos = 125; pos>=80; pos-=5)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-   //Moving door
-    for(pos = 80; pos < 110; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-  
-    //hiding door
-    for(pos = 110; pos>=80; pos-=15)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-    delay(700);
-   //Moving door
-    for(pos = 80; pos < 125; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-    delay(700);
-    //hiding door
-    for(pos = 125; pos>=80; pos-=5)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-
-  //Moving door
-    for(pos = 80; pos < 155; pos += 8)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-   
-    //Moving hand
-    for(pos = 0; pos < 129; pos += 3)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }  
-    
-    //hiding hand
-    for(pos = 129; pos>=0; pos-=3)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    } 
-      
-    //hiding door
-    for(pos = 155; pos>=80; pos-=15)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    }    
-    
-  }   
-
-
- //open door,move finger very slowly forward and back to hiding very slowly, then quickly close door
- void slow()
- {
- 
-//Moving door
-    for(pos = 80; pos < 155; pos += 1)   
-    {                                   
-    doorServo.write(pos);              
-    delay(30);                       
-    }
-   
-    //Moving hand
-    for(pos = 0; pos < 129; pos += 1)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(30);                       
-    }  
-    
-    //hiding hand
-    for(pos = 129; pos>=0; pos-=1)      
-    {                                
-    fingerServo.write(pos);               
-    delay(30);                        
-    } 
-      
-    //hiding door
-    for(pos = 155; pos>=125; pos-=1)     
-    {                                
-    doorServo.write(pos);              
-    delay(30);                      
-    }
-    delay(100);
-    for(pos = 125; pos>=80; pos-=4)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    }     
-    
- 
- }
- 
- //serious
- 
- void serious() {
- 
-//Moving door
-    for(pos = 80; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-     
-    //Moving hand
-    for(pos = 0; pos < 70; pos += 1)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }
-    delay(800);
-    
-    
-    //hiding door
-    for(pos = 155; pos>=130; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15); 
-    }
-    
-    //hiding door
-    for(pos = 130; pos < 155; pos+=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15); 
-    } 
-     //hiding door
-    for(pos = 155; pos>=130; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15); 
-    }   
-    //hiding door
-    for(pos = 130; pos < 155; pos+=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15); 
-    } 
-     
-    fingerServo.write(40);
-    delay(1000);
-      
-    //Moving hand
-    for(pos = 40; pos < 129; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    } 
-    
-    //hiding hand
-    for(pos = 129; pos>=0; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    } 
-    
-      
-    for(pos = 120; pos>=80; pos -= 1)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-   
-   
-     
-} 
-
-void trollClose(){
-//Moving door
-    for(pos = 80; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-   
-    //Moving hand
-    for(pos = 0; pos < 127; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }
-    //hiding door
-    for(pos = 155; pos>=130; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    }   
-    delay(2000);
-    
-    for(pos = 130; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-    
-    for(pos = 155; pos>=140; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);
-    }
-    for(pos = 140; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-    delay(500);
-    //hiding hand
-    for(pos = 127; pos>=0; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    } 
-      
-    //hiding door
-    for(pos = 155; pos>=80; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-
-}
-   
-void matrix()
-{
-
- //Moving door
-    for(pos = 80; pos < 155; pos += 3)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-   
-    //Moving hand
-    for(pos = 0; pos < 80; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }
-    
-    for(pos = 80; pos < 129; pos += 1)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(30);                       
-    }  
-    delay(300);
-    
-    for(pos = 129; pos>=0; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(10);                        
-    } 
-      
-    //hiding door
-    for(pos = 155; pos>=80; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-  
+/*
+Turns the hand out & in multiple times
+*/
+void cantDecide() {
+  turnDoorServo(doorOPEN, 1000);
+  turnHandServo(handON / 2, 500);
+  for (int i = 0; i < 5; i++) {
+    turnHandServo(handON / 4, 200);
+    turnHandServo(handON / 2, 200);
+  }
+  simpleClose();
 }
 
-void sneak() 
-   {    
-   //Moving door
-    for(pos = 80; pos < 130; pos += 1)   
-    {                                   
-    doorServo.write(pos);              
-    delay(30);                       
+void loop() {
+  int sensorVal = digitalRead(switchPIN);
+  if (sensorVal == OPEN) {
+    if (selectedMove > 5) { 
+      selectedMove = 0;
     }
-    delay(2000);
-    
-    //Moving hand
-    for(pos = 0; pos < 40; pos += 1)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(30);                       
-    }  
-        
-    delay(500);
-    
-    for(pos = 130; pos < 155; pos += 4)   
-    {                                   
-    doorServo.write(pos);              
-    delay(15);                       
-    }
-    delay(100);
-    
-    for(pos = 40; pos < 90; pos += 4)  
-    {                                   
-    fingerServo.write(pos);               
-    delay(15);                       
-    }  
-    delay(500);
-    //hiding hand
-    for(pos = 90; pos>=70; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    }
-    delay(100);
-    for(pos = 70; pos < 90; pos += 4)  
-    {                                   
 
-    fingerServo.write(pos);               
-    delay(15);                       
-    }
-    delay(100);
-    for(pos = 90; pos>=70; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    }
-    delay(100);
-       
-    for(pos = 70; pos < 129; pos += 4)  
-    {                                   
-
-    fingerServo.write(pos);               
-    delay(15);                       
+    if (selectedMove == 0) {
+      simpleClose();
+    } else if (selectedMove == 1) { 
+      simpleCloseSlow(); 
+    } else if (selectedMove == 2) { 
+      crazyDoor(); 
+    } else if (selectedMove == 3) { 
+      slow(); 
+    } else if (selectedMove == 4) { 
+      increasingFakeTouch(); 
+    } else if (selectedMove == 5) { 
+      cantDecide(); 
     }
     
-    for(pos = 129; pos>=0; pos-=4)      
-    {                                
-    fingerServo.write(pos);               
-    delay(15);                        
-    }    
-    //hiding door
-    for(pos = 155; pos>=80; pos-=3)     
-    {                                
-    doorServo.write(pos);              
-    delay(15);                      
-    } 
-   } 
-   
-   
-   
+    selectedMove += 1;
+  }
+}
