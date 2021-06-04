@@ -49,7 +49,7 @@ void resetServos() {
 }
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   pinMode(switchPIN, INPUT_PULLUP);
   resetServos();
   delay(1000);
@@ -142,10 +142,11 @@ void cantDecide() {
 void loop() {
   int sensorVal = digitalRead(switchPIN);
   if (sensorVal == OPEN) {
-    if (selectedMove > 5) { 
+    /*if (selectedMove > 5) { 
       selectedMove = 0;
     }
-
+    */
+    selectedMove = random(0, 6);
     if (selectedMove == 0) {
       simpleClose();
     } else if (selectedMove == 1) { 
@@ -160,6 +161,6 @@ void loop() {
       cantDecide(); 
     }
     
-    selectedMove += 1;
+    //selectedMove += 1;
   }
 }
