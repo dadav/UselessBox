@@ -9,11 +9,8 @@ const int doorPIN = 5;
 int handOFF = 0;
 int handON = 160;
 int doorCLOSE = 0;
-int doorOPEN = 60;
+int doorOPEN = 70;
 int OPEN = 0;
-
-// Misc
-int selectedMove = 0;
 
 // Servos
 Servo doorServo;
@@ -85,7 +82,6 @@ void increasingFakeTouch() {
     turnHandServo(handOFF, 450);
     turnDoorServo(doorCLOSE, 500);
   }
-  simpleClose();
 }
 
 /*
@@ -93,8 +89,8 @@ Opens the door multiple times without turning the hand at all
  */
 void crazyDoor() {
     for (int i = 0; i < 3; i++) {
-      turnDoorServo(doorOPEN / 4, 300);
-      turnDoorServo(doorCLOSE, 300);
+      turnDoorServo(doorOPEN / 2, 500);
+      turnDoorServo(doorCLOSE, 500);
     }
     simpleClose();
 }
@@ -132,7 +128,7 @@ Turns the hand out & in multiple times
 void cantDecide() {
   turnDoorServo(doorOPEN, 1000);
   turnHandServo(handON / 2, 500);
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 8; i++) {
     turnHandServo(handON / 4, 200);
     turnHandServo(handON / 2, 200);
   }
@@ -142,25 +138,25 @@ void cantDecide() {
 void loop() {
   int sensorVal = digitalRead(switchPIN);
   if (sensorVal == OPEN) {
-    /*if (selectedMove > 5) { 
-      selectedMove = 0;
+    switch (random(0, 6)) {
+      case 0:
+        simpleClose();
+        break;
+      case 1: 
+        simpleCloseSlow();
+        break;
+      case 2:
+        crazyDoor();
+        break;
+      case 3:
+        slow();
+        break;
+      case 4:
+        increasingFakeTouch();
+        break;
+      case 5: 
+        cantDecide();
+        break;
     }
-    */
-    selectedMove = random(0, 6);
-    if (selectedMove == 0) {
-      simpleClose();
-    } else if (selectedMove == 1) { 
-      simpleCloseSlow(); 
-    } else if (selectedMove == 2) { 
-      crazyDoor(); 
-    } else if (selectedMove == 3) { 
-      slow(); 
-    } else if (selectedMove == 4) { 
-      increasingFakeTouch(); 
-    } else if (selectedMove == 5) { 
-      cantDecide(); 
-    }
-    
-    //selectedMove += 1;
   }
 }
