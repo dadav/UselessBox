@@ -12,6 +12,11 @@ int doorCLOSE = 0;
 int doorOPEN = 70;
 int OPEN = 0;
 
+// Times
+int startOffsetTime = 500;
+int fullHandRotationTime = 1500;
+int fullDoorRotationTime = 800;
+
 // Servos
 Servo doorServo;
 Servo handServo;
@@ -41,33 +46,31 @@ void turnHandServo(int val, int wait) {
 }
 
 void resetServos() {
-  turnHandServo(handOFF, 100);
-  turnDoorServo(doorCLOSE, 100);
+  turnHandServo(handOFF, fullHandRotationTime);
+  turnDoorServo(doorCLOSE, fullDoorRotationTime);
 }
 
 void setup() {
-  //Serial.begin(9600);
   pinMode(switchPIN, INPUT_PULLUP);
   resetServos();
-  delay(1000);
 }
 
 /*
 Simple, plain open, turn off & close
 */
 void simpleClose() {
-    turnDoorServo(doorOPEN, 1000);
-    turnHandServo(handON, 2000);
-    turnHandServo(handOFF, 450);
-    turnDoorServo(doorCLOSE, 500);
+    turnDoorServo(doorOPEN, fullDoorRotationTime);
+    turnHandServo(handON, fullHandRotationTime);
+    turnHandServo(handOFF, fullHandRotationTime);
+    turnDoorServo(doorCLOSE, fullDoorRotationTime);
 }
 
 /*
 Opens the door, turns the hand half way, make a small pause and then continue.
 */
 void simpleCloseSlow() {
-    turnDoorServo(doorOPEN, 1000);
-    turnHandServo(handON / 2, 2000);
+    turnDoorServo(doorOPEN, fullDoorRotationTime);
+    turnHandServo(handON / 2, fullHandRotationTime / 2);
     simpleClose();
 }
 
@@ -77,10 +80,10 @@ Opens the door repeatedly and fakes the trigger
 void increasingFakeTouch() {
   int turns = 5;
   for(int i = 0; i < turns; i++) {
-    turnDoorServo(doorOPEN, 1000);
-    turnHandServo(handON / (turns - i), 300 + i * 100);
-    turnHandServo(handOFF, 450);
-    turnDoorServo(doorCLOSE, 500);
+    turnDoorServo(doorOPEN, fullDoorRotationTime);
+    turnHandServo(handON / (turns - i), fullHandRotationTime / (turns - i));
+    turnHandServo(handOFF, fullHandRotationTime);
+    turnDoorServo(doorCLOSE, fullDoorRotationTime);
   }
 }
 
@@ -89,8 +92,8 @@ Opens the door multiple times without turning the hand at all
  */
 void crazyDoor() {
     for (int i = 0; i < 3; i++) {
-      turnDoorServo(doorOPEN / 2, 500);
-      turnDoorServo(doorCLOSE, 500);
+      turnDoorServo(doorOPEN / 1.5, fullDoorRotationTime / 1.5);
+      turnDoorServo(doorCLOSE, fullDoorRotationTime / 1.5);
     }
     simpleClose();
 }
@@ -126,11 +129,11 @@ void slow() {
 Turns the hand out & in multiple times
 */
 void cantDecide() {
-  turnDoorServo(doorOPEN, 1000);
-  turnHandServo(handON / 2, 500);
+  turnDoorServo(doorOPEN, fullDoorRotationTime);
+  turnHandServo(handON / 2, fullHandRotationTime / 2);
   for (int i = 0; i < 8; i++) {
-    turnHandServo(handON / 4, 200);
-    turnHandServo(handON / 2, 200);
+    turnHandServo(handON / 4, fullHandRotationTime / 4);
+    turnHandServo(handON / 2, fullHandRotationTime / 2);
   }
   simpleClose();
 }
@@ -138,6 +141,8 @@ void cantDecide() {
 void loop() {
   int sensorVal = digitalRead(switchPIN);
   if (sensorVal == OPEN) {
+    delay(startOffsetTime);
+    
     switch (random(0, 6)) {
       case 0:
         simpleClose();
