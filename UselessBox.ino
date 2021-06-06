@@ -28,10 +28,10 @@ Attaches to the servo, turns it, waits some time and detaches.
 We do this to stop the current draw
 */
 void turnDoorServo(int val, int wait) {
-  doorServo.attach(doorPIN);
+  //doorServo.attach(doorPIN);
   doorServo.write(val);
   delay(wait);
-  doorServo.detach();
+  //doorServo.detach();
 }
 
 /*
@@ -39,10 +39,10 @@ Attaches to the servo, turns it, waits some time and detaches.
 We do this to stop the current draw
 */
 void turnHandServo(int val, int wait) {
-  handServo.attach(handPIN);
+  //handServo.attach(handPIN);
   handServo.write(val);
   delay(wait);
-  handServo.detach();
+  //handServo.detach();
 }
 
 void resetServos() {
@@ -52,6 +52,8 @@ void resetServos() {
 
 void setup() {
   pinMode(switchPIN, INPUT_PULLUP);
+  doorServo.attach(doorPIN);
+  handServo.attach(handPIN);
   resetServos();
 }
 
