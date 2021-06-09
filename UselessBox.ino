@@ -11,6 +11,8 @@ int handON = 160;
 int doorCLOSE = 0;
 int doorOPEN = 70;
 int OPEN = 0;
+int rndVal = 0;
+int lastVal = -1;
 
 // Times
 int startOffsetTime = 500;
@@ -80,7 +82,7 @@ void simpleCloseSlow() {
 Opens the door repeatedly and fakes the trigger
 */
 void increasingFakeTouch() {
-  int turns = 5;
+  int turns = 3;
   for(int i = 0; i < turns; i++) {
     turnDoorServo(doorOPEN, fullDoorRotationTime);
     turnHandServo(handON / (turns - i), fullHandRotationTime / (turns - i));
@@ -133,7 +135,7 @@ Turns the hand out & in multiple times
 void cantDecide() {
   turnDoorServo(doorOPEN, fullDoorRotationTime);
   turnHandServo(handON / 2, fullHandRotationTime / 2);
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 4; i++) {
     turnHandServo(handON / 4, fullHandRotationTime / 4);
     turnHandServo(handON / 2, fullHandRotationTime / 2);
   }
@@ -145,7 +147,13 @@ void loop() {
   if (sensorVal == OPEN) {
     delay(startOffsetTime);
     
-    switch (random(0, 6)) {
+    // dont make same move twice
+    while(rndVal==lastVal) {
+      rndVal = random(0, 6);
+    }
+    lastVal = rndVal;
+    
+    switch (rndVal) {
       case 0:
         simpleClose();
         break;
